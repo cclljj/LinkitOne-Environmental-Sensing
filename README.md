@@ -35,4 +35,4 @@ This is a environmental monitoring project that measures temperature, relative h
 
 This software is written by Ling-Jyh([cclljj@gmail.com](cclljj@gmail.com "cclljj@gmail.com")) and is licensed under [The MIT License](http://opensource.org/licenses/mit-license.php). Check License.txt for more information.
 
-Contributing to this software is warmly welcomed. You can do this basically by [forking](https://help.github.com/articles/fork-a-repo), committing modifications and then [pulling requests](https://help.github.com/articles/using-pull-requests) (follow the links above for operating guide). Adding change log and your contact into file header is encouraged. Thanks for your contribution.
+Contributing to this project is warmly welcomed. You can do this basically by [forking](https://help.github.com/articles/fork-a-repo), committing modifications and then [pulling requests](https://help.github.com/articles/using-pull-requests) (follow the links above for operating guide). Adding change log and your contact into file header is encouraged. Thanks for your contribution.
