@@ -1,8 +1,8 @@
-#include <My_Password.h>    // containing personal wifi/thingspeak/etc password settings
+#define USING_THINGSPEAK  1
+#define USING_WIFI        1
 
+#include <My_Password.h>    // containing personal wifi/thingspeak/etc password settings
 #include <Time.h>
-#include <LWiFi.h>
-#include <LWiFiClient.h>
 #include <LBattery.h>
 #include <DHT_linkit.h>
 #include <Digital_Light_TSL2561.h>
@@ -13,24 +13,31 @@
 #include <Arduino.h>
 
 
-#ifndef _THINGSPEAK_API_KEY_
-#define THINGSPEAK_API_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#if USING_WIFI==1
+  #include <LWiFi.h>
+  #include <LWiFiClient.h>  
+  #ifndef _WIFI_
+    #define WIFI_AP "default_AP"            // replace your WiFi AP SSID
+    #define WIFI_PASSWORD "default_password"  // replace your WiFi AP password
+    #define WIFI_AUTH LWIFI_OPEN           // choose from LWIFI_OPEN, LWIFI_WPA, or LWIFI_WEP according to your AP
+  #endif
+  LWiFiClient client;
+  LWifiStatus wifistatus;
+  // Variable Setup
+  long lastConnectionTime = 0; 
+  boolean lastConnected = false;
+  int failedCounter = 0;
 #endif
 
-#ifndef _WIFI_
-#define WIFI_AP "default_AP"            // replace your WiFi AP SSID
-#define WIFI_PASSWORD "default_password"  // replace your WiFi AP password
-#define WIFI_AUTH LWIFI_OPEN           // choose from LWIFI_OPEN, LWIFI_WPA, or LWIFI_WEP according to your AP
+#if USING_THINGSPEAK==1
+  #ifndef _THINGSPEAK_API_KEY_
+    #define THINGSPEAK_API_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  #endif
+  const int updateThingSpeakInterval = 30 * 1000;      // Time interval in milliseconds to update ThingSpeak (number of seconds * 1000 = interval)
 #endif
 
 
-LWiFiClient client;
-LWifiStatus wifistatus;
-const int updateThingSpeakInterval = 30 * 1000;      // Time interval in milliseconds to update ThingSpeak (number of seconds * 1000 = interval)
-// Variable Setup
-long lastConnectionTime = 0; 
-boolean lastConnected = false;
-int failedCounter = 0;
+
 
 
 
@@ -87,8 +94,9 @@ void setup()
     }
 
     
-    // LinkIt One WiFi
+#if USING_WIFI==1
     LWiFi.begin();
+#endif
 }
 
 void loop()
@@ -174,6 +182,7 @@ float ba, bp;
     delay(2000);
 
 
+#if USING_THINGSPEAK==1
     // upload data to thingspeak
     // reference: https://github.com/iobridge/ThingSpeak-Arduino-Examples/blob/master/Ethernet/Arduino_to_ThingSpeak.ino
     while (client.available()){
@@ -191,15 +200,19 @@ float ba, bp;
     // Update ThingSpeak
     if((millis() - lastConnectionTime > updateThingSpeakInterval)){
       Serial.println("about to update ThingSpeak...");
-      updateThingSpeak("field1="+String(t)+"&field2="+String(h)+"&field3="+String(bp)+"&field4="+String(light)+"&field5="+String(v_int));
+        updateThingSpeak_wifi("field1="+String(t)+"&field2="+String(h)+"&field3="+String(bp)+"&field4="+String(light)+"&field5="+String(v_int));
     }
   
     // Check if LWiFi needs to be restarted
     if (failedCounter > 3 ) { 
-      start_WiFi(); 
+      #if USING_WIFI==1
+        start_WiFi(); 
+      #endif
     }
   
     lastConnected = client.connected();
+#endif
+
 }
 
 //=======================================
@@ -208,7 +221,6 @@ float ba, bp;
 void start_WiFi(){
     if (client.connected()) { 
       client.stop(); 
-      client.flush();
     }
     Serial.println("Connecting to WiFi AP: " + String(WIFI_AP));
     Serial.println(String(hour(),DEC) + ":" + String(minute(),DEC) + ":" + String(second(),DEC) + "  start start_WiFi()");
@@ -236,7 +248,7 @@ void start_WiFi(){
 //  update ThingSpeak
 //  Reference: https://github.com/iobridge/ThingSpeak-Arduino-Examples/blob/master/Ethernet/Arduino_to_ThingSpeak.ino
 //=======================================
-void updateThingSpeak(String tsData){
+void updateThingSpeak_wifi(String tsData){
 
   wifistatus = LWiFi.status();
   if (wifistatus == LWIFI_STATUS_DISABLED){
