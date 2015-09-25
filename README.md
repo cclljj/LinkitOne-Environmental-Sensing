@@ -20,13 +20,13 @@ This is a environmental monitoring project that measures temperature, relative h
 ```javascript
   #ifndef _THINGSPEAK_API_KEY_
 	#define _THINGSPEAK_API_KEY_
-	#define THINGSPEAK_API_KEY "1234567890"
+	#define THINGSPEAK_API_KEY "1234567890"	// replace your ThingSpeak API key
   #endif
 
   #ifndef _WIFI_
 	#define _WIFI_
   	#define WIFI_AP "MY_WIFI_AP"            // replace your WiFi AP SSID
-  	#define WIFI_PASSWORD "MY_WIFI_PASSWD"
+  	#define WIFI_PASSWORD "MY_WIFI_PASSWD"	// replace your WiFi AP Password
   	#define WIFI_AUTH LWIFI_WPA           // choose from LWIFI_OPEN, LWIFI_WPA, or LWIFI_WEP according to your AP
   #endif
 ```
