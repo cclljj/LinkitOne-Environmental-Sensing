@@ -34,7 +34,7 @@ This is a environmental monitoring project that measures temperature, relative h
   #endif
 ```
 
-<hr>
+##Note
 
 This software is written by Ling-Jyh([cclljj@gmail.com](cclljj@gmail.com "cclljj@gmail.com")) and is licensed under [The MIT License](http://opensource.org/licenses/mit-license.php). Check License.txt for more information.
 
