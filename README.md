@@ -25,10 +25,9 @@ This is a environmental monitoring project that measures temperature, relative h
 
   #ifndef _WIFI_
 	#define _WIFI_
-
-  #define WIFI_AP "MY_WIFI_AP"            // replace your WiFi AP SSID
-  #define WIFI_PASSWORD "MY_WIFI_PASSWD"
-  #define WIFI_AUTH LWIFI_WPA           // choose from LWIFI_OPEN, LWIFI_WPA, or LWIFI_WEP according to your AP
+  	#define WIFI_AP "MY_WIFI_AP"            // replace your WiFi AP SSID
+  	#define WIFI_PASSWORD "MY_WIFI_PASSWD"
+  	#define WIFI_AUTH LWIFI_WPA           // choose from LWIFI_OPEN, LWIFI_WPA, or LWIFI_WEP according to your AP
   #endif
 ```
 
