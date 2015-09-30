@@ -54,9 +54,11 @@ DHT_linkit dht(DHTPIN, DHTTYPE);
 // Interface: I2C
 // http://www.seeedstudio.com/wiki/Grove_-_Barometer_(High-Accuracy)
 unsigned char ret = 0;
+
 KalmanFilter t_filter;    //temperature filter
 KalmanFilter p_filter;    //pressure filter
-KalmanFilter a_filter;    //altitude filter
+KalmanFilter h_filter;    //altitude filter
+
 
 //====================
 // Grove - LCD RGB Backlight
@@ -132,6 +134,8 @@ float ba, bp;
       delay(100);
       dht.readHT(&t, &h);    
     }
+    t = t_filter.Filter(t);
+    h = h_filter.Filter(h);
     lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("temp: " + String(t));
@@ -154,6 +158,7 @@ float ba, bp;
         if (bp>10) break;
         Serial.println("Something wrong with barometer => retry it!");
       }
+      bp = p_filter.Filter(bp);
       
       lcd.clear();
       lcd.setCursor(0, 0);
