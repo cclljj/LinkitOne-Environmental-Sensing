@@ -230,7 +230,7 @@ void start_WiFi(){
     Serial.println("Connecting to WiFi AP: " + String(WIFI_AP));
     Serial.println(String(hour(),DEC) + ":" + String(minute(),DEC) + ":" + String(second(),DEC) + "  start start_WiFi()");
 
-    if (0 <= LWiFi.connect(WIFI_AP, LWiFiLoginInfo(WIFI_AUTH, WIFI_PASSWORD))){
+    if (LWiFi.connect(WIFI_AP, LWiFiLoginInfo(WIFI_AUTH, WIFI_PASSWORD))<=0){
       Serial.println("WiFi connection failed.....");
     }
     
