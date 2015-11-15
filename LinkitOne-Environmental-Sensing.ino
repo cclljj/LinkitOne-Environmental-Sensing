@@ -260,8 +260,23 @@ void start_WiFi(){
     if (client.connected()) { 
       client.stop(); 
     }
+
+    wifistatus = LWiFi.status();
+    if (wifistatus!=LWIFI_STATUS_DISABLED && failedCounter>3){
+        Serial.println("before LWiFi.end()...");
+        LWiFi.end();
+        LWiFi.begin();
+        failedCounter = 0;
+        Serial.println("after LWiFi.start()..."); 
+    } else if (wifistatus==LWIFI_STATUS_DISABLED){
+        LWiFi.begin();
+        Serial.println("after LWiFi.start()..."); 
+    }
+    
     Serial.println("Connecting to WiFi AP: " + String(WIFI_AP));
     Serial.println(String(hour(),DEC) + ":" + String(minute(),DEC) + ":" + String(second(),DEC) + "  start start_WiFi()");
+
+
 
     if (LWiFi.connect(WIFI_AP, LWiFiLoginInfo(WIFI_AUTH, WIFI_PASSWORD))<=0){
       Serial.println("WiFi connection failed.....");
@@ -269,8 +284,10 @@ void start_WiFi(){
     
     wifistatus = LWiFi.status();
     if (wifistatus == LWIFI_STATUS_DISABLED){
+      failedCounter++;
       Serial.println("WiFi status: LWIFI_STATUS_DISABLED");
     } else if (wifistatus == LWIFI_STATUS_DISCONNECTED) {
+      failedCounter++;
       Serial.println("WiFi status: LWIFI_STATUS_DISCONNECTED");
     } else {
       Serial.println("WiFi status: LWIFI_STATUS_CONNECTED");
@@ -278,7 +295,7 @@ void start_WiFi(){
       Serial.println(LWiFi.localIP());
       Serial.print("RSSI is: ");
       Serial.println(LWiFi.RSSI());
-      failedCounter = 0;
+ //     failedCounter = 0;
     }
 }
 
@@ -291,7 +308,6 @@ void updateThingSpeak_wifi(String tsData){
   wifistatus = LWiFi.status();
   if (wifistatus == LWIFI_STATUS_DISABLED){
     Serial.println("=> WiFi status: LWIFI_STATUS_DISABLED");
-    LWiFi.begin();
     start_WiFi();
   } else if (wifistatus == LWIFI_STATUS_DISCONNECTED) {
     Serial.println("=> WiFi status: LWIFI_STATUS_DISCONNECTED");
@@ -306,7 +322,7 @@ void updateThingSpeak_wifi(String tsData){
     
   if (wifistatus != LWIFI_STATUS_CONNECTED){
     failedCounter++;
-    Serial.println("Did not try updateThingSpeak because it's not connected....");
+    Serial.println("Did not try updateThingSpeak because it's not connected....("+String(failedCounter, DEC)+")");
     Serial.println();
     return;
   }
