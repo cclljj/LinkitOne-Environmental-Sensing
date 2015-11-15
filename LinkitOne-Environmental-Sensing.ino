@@ -1,17 +1,33 @@
 #define USING_THINGSPEAK  1
 #define USING_WIFI        1
+#define USING_LCD         0
+#define SENSE_TEMPERATURE 0
+#define SENSE_LIGHT       1
+#define SENSE_BAROMETER   1
+#define SENSE_BATTERY     1
 
 #include <My_Password.h>    // containing personal wifi/thingspeak/etc password settings
 #include <Time.h>
 #include <LBattery.h>
-#include <DHT_linkit.h>
-#include <Digital_Light_TSL2561.h>
-#include <HP20x_dev.h>
-#include <KalmanFilter.h>
-#include <rgb_lcd.h>
 #include <Wire.h>
 #include <Arduino.h>
 
+#if SENSE_TEMPERATURE==1
+  #include <DHT_linkit.h>
+#endif
+
+#if SENSE_LIGHT==1
+  #include <Digital_Light_TSL2561.h>
+#endif
+
+#if SENSE_BAROMETER==1
+  #include <HP20x_dev.h>
+  #include <KalmanFilter.h>
+#endif
+
+#if USING_LCD==1
+  #include <rgb_lcd.h>
+#endif
 
 #if USING_WIFI==1
   #include <LWiFi.h>
@@ -33,54 +49,59 @@
   #ifndef _THINGSPEAK_API_KEY_
     #define THINGSPEAK_API_KEY "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
   #endif
-  const int updateThingSpeakInterval = 30 * 1000;      // Time interval in milliseconds to update ThingSpeak (number of seconds * 1000 = interval)
+  const int updateThingSpeakInterval = 3 * 1000;      // Time interval in milliseconds to update ThingSpeak (number of seconds * 1000 = interval)
 #endif
 
+#if SENSE_TEMPERATURE==1
+  // Grove - Temperature and Humidity Sensor Pro
+  // Interface: Analog (or Digital)
+  // http://www.seeedstudio.com/wiki/Grove_-_Temperature_and_Humidity_Sensor_Pro
+  // for LinkIt One, use the library: https://github.com/Seeed-Studio/Grove_Starter_Kit_For_LinkIt/tree/master/libraries/Humidity_Temperature_Sensor
+  #define DHTPIN 2     // what pin we're connected to
+  #define DHTTYPE DHT22   // DHT 22  (AM2302)
+  DHT_linkit dht(DHTPIN, DHTTYPE);
+#endif
 
+#if SENSE_BAROMETER==1
+  // Grove - Barometer (High-Accuracy)
+  // Interface: I2C
+  // http://www.seeedstudio.com/wiki/Grove_-_Barometer_(High-Accuracy)
+  unsigned char ret = 0;
 
+  KalmanFilter t_filter;    //temperature filter
+  KalmanFilter p_filter;    //pressure filter
+  KalmanFilter h_filter;    //altitude filter
+#endif
 
-
-
-// Grove - Temperature and Humidity Sensor Pro
-// Interface: Analog (or Digital)
-// http://www.seeedstudio.com/wiki/Grove_-_Temperature_and_Humidity_Sensor_Pro
-// for LinkIt One, use the library: https://github.com/Seeed-Studio/Grove_Starter_Kit_For_LinkIt/tree/master/libraries/Humidity_Temperature_Sensor
-#define DHTPIN 2     // what pin we're connected to
-#define DHTTYPE DHT22   // DHT 22  (AM2302)
-DHT_linkit dht(DHTPIN, DHTTYPE);
-
-
-// Grove - Barometer (High-Accuracy)
-// Interface: I2C
-// http://www.seeedstudio.com/wiki/Grove_-_Barometer_(High-Accuracy)
-unsigned char ret = 0;
-
-KalmanFilter t_filter;    //temperature filter
-KalmanFilter p_filter;    //pressure filter
-KalmanFilter h_filter;    //altitude filter
-
-
-//====================
-// Grove - LCD RGB Backlight
-// Interface: I2C
-// http://www.seeedstudio.com/wiki/Grove_-_LCD_RGB_Backlight
-rgb_lcd lcd;
-
+#if USING_LCD==1
+  //====================
+  // Grove - LCD RGB Backlight
+  // Interface: I2C
+  // http://www.seeedstudio.com/wiki/Grove_-_LCD_RGB_Backlight
+  rgb_lcd lcd;
+#endif
 
 
 void setup()
 {
     Serial.begin(9600);
-
+#if USING_LCD==1
     lcd.begin(16, 2);
     lcd.setRGB(0,0,0);
+#endif
 
+#if SENSE_TEMPERATURE==1
     // Grove - Temperature and Humidity Sensor Pro
     dht.begin();
+#endif
 
+
+#if SENSE_LIGHT==1
     // Grove - Digital Light Sensor
     TSL2561.init();
+#endif
 
+#if SENSE_BAROMETER==1
     // Grove - Barometer (High-Accuracy)
     // Power up,delay 150ms,until voltage is stable
     delay(150);
@@ -94,7 +115,7 @@ void setup()
     } else {
       Serial.println("HP20x_dev isn't available.");
     }
-
+#endif
     
 #if USING_WIFI==1
     LWiFi.begin();
@@ -103,31 +124,36 @@ void setup()
 
 void loop()
 {
-int v_int;
-long v_long;
-long light;
-float ba, bp;
+int v_int=0;
+long v_long=0;
+long light=0;
+float ba=0, bp=0;
+float h=0,t=0;
 
-
+#if USING_LCD==1
     lcd.setRGB(0,0,0);
+#endif
 
+#if SENSE_LIGHT==1
     // Grove - Digital Light Sensor
     light = TSL2561.readVisibleLux();
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("light: " + String(light));
+    #if USING_LCD==1
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("light: " + String(light));
 
-    if(light<750){
-      lcd.setRGB(random(128)+random(128), random(128)+random(128), random(128)+random(128));
-    } else {
-      lcd.setRGB(0,0,0);
-    }
-
+      if(light<750){
+        lcd.setRGB(random(128)+random(128), random(128)+random(128), random(128)+random(128));
+      } else {
+        lcd.setRGB(0,0,0);
+      }
+    #endif
     delay(2000);
+#endif
 
+#if SENSE_TEMPERATURE==1
     // Grove - Temperature and Humidity Sensor Pro
     // use the library: https://github.com/Seeed-Studio/Grove_Starter_Kit_For_LinkIt/tree/master/libraries/Humidity_Temperature_Sensor    
-    float h,t;
     dht.readHT(&t, &h);
     while (isnan(t) || isnan(h) || t<0 || t>80 || h<0 || h > 100){
       Serial.println("Something wrong with DHT => retry it!");
@@ -136,16 +162,20 @@ float ba, bp;
     }
     t = t_filter.Filter(t);
     h = h_filter.Filter(h);
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("temp: " + String(t));
+ 
+    #if USING_LCD==1
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("temp: " + String(t));
     
-    lcd.setCursor(0,1);
-    lcd.print("humid: " + String(h));
-  
+      lcd.setCursor(0,1);
+      lcd.print("humid: " + String(h));
+    #endif
     // Wait a bit between measurements.
     delay(2000);
+#endif
 
+#if SENSE_BAROMETER==1
     // Grove - Barometer (High-Accuracy)
     if(OK_HP20X_DEV == ret){ 
       //v_long = HP20x.ReadTemperature();
@@ -159,33 +189,36 @@ float ba, bp;
         Serial.println("Something wrong with barometer => retry it!");
       }
       bp = p_filter.Filter(bp);
-      
-      lcd.clear();
-      lcd.setCursor(0, 0);
-      lcd.print("pressure: " + String(bp));
-      lcd.setCursor(0, 1);
-      lcd.print("altitude: " + String(ba));
 
+      #if USING_LCD==1
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("pressure: " + String(bp));
+        lcd.setCursor(0, 1);
+        lcd.print("altitude: " + String(ba));
+      #endif
       delay(2000);
     }
+#endif
 
+#if SENSE_BATTERY==1
     // Show battery status
     v_int = LBattery.level();
-    if (v_int < 50) { lcd.setRGB(255,0,0); }
-    lcd.clear();
-    if (LBattery.isCharging()){
-      Serial.println("Charging Mode-- " + String(v_int, DEC) + "%");
-      lcd.setCursor(0, 0);
-      lcd.print(".. Charging ..");
-    } else {
-      Serial.println("Battery Mode -- " + String(v_int, DEC) + "%");
-      lcd.setCursor(0, 0);
-      lcd.print("On Battery");
-    }
-    lcd.setCursor(0, 1);
-    lcd.print("Battery: " + String(v_int, DEC) + "%");
+    #if USING_LCD==1
+      if (v_int < 50) { lcd.setRGB(255,0,0); }
+      lcd.clear();
+      if (LBattery.isCharging()){
+        lcd.setCursor(0, 0);
+        lcd.print(".. Charging ..");
+      } else {
+        lcd.setCursor(0, 0);
+        lcd.print("On Battery");
+      }
+      lcd.setCursor(0, 1);
+      lcd.print("Battery: " + String(v_int, DEC) + "%");
+    #endif
     delay(2000);
-
+#endif
 
 #if USING_THINGSPEAK==1
     // upload data to thingspeak
@@ -292,7 +325,7 @@ void updateThingSpeak_wifi(String tsData){
     lastConnectionTime = millis();
     
     if (client.connected()){
-      Serial.println("Connecting to ThingSpeak...");      
+      Serial.println("Connecting to ThingSpeak succeeded!");      
       failedCounter = 0;
     } else {
       failedCounter++;
